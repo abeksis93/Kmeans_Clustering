@@ -1,32 +1,27 @@
+import sys
 from tkinter import Tk, Label, Button, Entry, IntVar, END, W, E, filedialog, messagebox, PhotoImage
 import pandas as pd
-import numpy as np
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from sklearn import preprocessing
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 import chart_studio.plotly as py
-from matplotlib.figure import Figure
+import plotly.express as px
 
 
 class Clustering:
 
     def __init__(self, master):
         self.master = master
-        master.title("Clustering")
+        master.title("K Means Clustering")
 
-        # self.total = 0
         self.path = ""
         self.clusters = None
         self.runs = None
         self.final_df = None
-        # self.total_label_text = IntVar()
-        # self.total_label_text.set(self.total)
-        # self.total_label = Label(master, textvariable=self.total_label_text)
 
-        self.path_label = Label(master, text="Select File: ")
-        self.clusters_label = Label(master, text="Number of clusters k: ")
-        self.runs_label = Label(master, text="Number of runs: ")
+        self.path_label = Label(master, text="Select File:")
+        self.clusters_label = Label(master, text="Number of clusters k:")
+        self.runs_label = Label(master, text="Number of runs:")
 
         vcmd_path = master.register(self.validate_path) # we have to wrap the command
         vcmd_clusters = master.register(self.validate_clusters) # we have to wrap the command
@@ -52,7 +47,7 @@ class Clustering:
         self.runs_label.grid(row=2, column=0, sticky=W)
         self.runs_entry.grid(row=2, column=1, columnspan=3, sticky=W + E)
 
-        self.browse_button.grid(row=10, column=0, sticky=E)
+        self.browse_button.grid(row=0, column=10, sticky=E)
         self.pre_process_button.grid(row=10, column=1)
         self.kmeans_button.grid(row=10, column=2)
         self.reset_button.grid(row=10, column=3, sticky=W+E)
@@ -75,7 +70,6 @@ class Clustering:
             return False
 
     def validate_clusters(self, new_text):
-        # print("clusters new text:  " + new_text)
         if not new_text:  # the field is being cleared
             self.clusters = 1
             return True
@@ -104,10 +98,13 @@ class Clustering:
         self.path_entry.insert(0, self.path)
 
     def reset_entry(self):
-        self.path = ""
         self.path_entry.delete(0, END)
         self.clusters_entry.delete(0, END)
         self.runs_entry.delete(0, END)
+        self.path = ""
+        self.clusters = None
+        self.runs = None
+        self.final_df = None
 
     def pre_process(self):
         if self.path == "":
@@ -124,26 +121,19 @@ class Clustering:
         df.fillna(df.mean(), inplace=True)
         df[df.columns.difference(['country', 'year'])] = preprocessing.StandardScaler().fit_transform(df[df.columns.difference(['country', 'year'])])
         new_df = df[df.columns.difference(['year'])].groupby(['country'], as_index=False).mean()
-        # print(new_df)
         messagebox.showinfo("K Means Clustering", "Preprocessing completed successfully!")
-        # self.kmeans(new_df)
         self.final_df = new_df
 
     def kmeans(self):
-        # if self.clusters_entry == "" or self.clusters_entry is None:
-        #     self.clusters_entry = 1
-        # if self.runs_entry == "" or self.runs_entry is None:
-        #     self.runs_entry = 0
-        # print("in kmeans")
         if self.final_df is None:
             messagebox.showwarning("K Means Clustering", "Preprocessing is required before clustering!")
             return False
         df = self.final_df
         k_means = KMeans(n_clusters=self.clusters, init='random', n_init=self.runs).fit(df[df.columns.difference(['country'])])
         df['labels'] = k_means.labels_
-        print(k_means.labels_)
+        messagebox.showinfo("K Means Clustering", "Clustering completed successfully!")
+        df.to_excel('clean_data.xlsx', index=False)
         self.plot_clusters(df)
-        # pass
 
     def plot_clusters(self, df):
         plt.scatter(df['Social support'], df['Generosity'], c=df['labels'])
@@ -151,15 +141,25 @@ class Clustering:
         plt.xlabel('Social support')
         plt.ylabel('Generosity')
         plt.colorbar()
-        plt.savefig("plot1.png")
-        photo = PhotoImage(file="plot1.png")
+        plt.savefig("plot.png")
+        photo = PhotoImage(file="plot.png")
         photo = photo.subsample(1, 1)
         img = Label(root, image=photo)
         img.image = photo
-        img.place(x=0, y=100)
+        img.place(x=10, y=100)
+        py.sign_in("yoni93", "X5hK2SJ7Nv94S0kmafup")
+        fig = px.choropleth(df, locations='country', color='labels', color_continuous_scale="Viridis", scope="world", locationmode='country names', width=600, height=400,)
+        py.image.save_as(fig, filename='name.png')
+        world_photo = PhotoImage(file="name.png")
+        world_photo = world_photo.subsample(1, 1)
+        world_img = Label(root, image=world_photo)
+        world_img.image = world_photo
+        world_img.place(x=660, y=100)
 
 
 root = Tk()
 my_gui = Clustering(root)
-root.geometry("800x600")
+root.geometry("1280x720")
 root.mainloop()
+sys.exit()
+
