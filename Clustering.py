@@ -1,9 +1,12 @@
-from tkinter import Tk, Label, Button, Entry, IntVar, END, W, E, filedialog, messagebox
+from tkinter import Tk, Label, Button, Entry, IntVar, END, W, E, filedialog, messagebox, PhotoImage
 import pandas as pd
 import numpy as np
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from sklearn import preprocessing
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
+import chart_studio.plotly as py
+from matplotlib.figure import Figure
 
 
 class Clustering:
@@ -14,7 +17,9 @@ class Clustering:
 
         # self.total = 0
         self.path = ""
-
+        self.clusters = None
+        self.runs = None
+        self.final_df = None
         # self.total_label_text = IntVar()
         # self.total_label_text.set(self.total)
         # self.total_label = Label(master, textvariable=self.total_label_text)
@@ -52,6 +57,13 @@ class Clustering:
         self.kmeans_button.grid(row=10, column=2)
         self.reset_button.grid(row=10, column=3, sticky=W+E)
 
+    def read_file(self):
+        try:
+            df = pd.read_excel(self.path)
+            return df
+        except OSError:
+            return False
+
     def validate_path(self, new_text):
         if not new_text:  # the field is being cleared
             self.path = ""
@@ -63,13 +75,13 @@ class Clustering:
             return False
 
     def validate_clusters(self, new_text):
-        print("clusters new text:  " + new_text)
+        # print("clusters new text:  " + new_text)
         if not new_text:  # the field is being cleared
-            self.clusters_entry = 1
+            self.clusters = 1
             return True
         try:
-            self.clusters_entry = int(new_text)
-            if (self.clusters_entry >= 1) and (self.clusters_entry < 10):
+            self.clusters = int(new_text)
+            if (self.clusters >= 1) and (self.clusters < 10):
                 return True
             return False
         except ValueError:
@@ -77,11 +89,11 @@ class Clustering:
 
     def validate_runs(self, new_text):
         if not new_text:  # the field is being cleared
-            self.runs_entry = 0
+            self.runs = 1
             return True
         try:
-            self.runs_entry = int(new_text)
-            if self.runs_entry >= 0:
+            self.runs = int(new_text)
+            if self.runs > 0:
                 return True
             return False
         except ValueError:
@@ -98,34 +110,56 @@ class Clustering:
         self.runs_entry.delete(0, END)
 
     def pre_process(self):
+        if self.path == "":
+            messagebox.showwarning("K Means Clustering", "Missing values: file path is required")
+            return False
+        if type(self.clusters) is not int:
+            messagebox.showwarning("K Means Clustering", "Missing values: 'Number of clusters k' is required")
+            return False
+        if type(self.runs) is not int:
+            messagebox.showwarning("K Means Clustering", "Missing values: 'Number of runs' is required")
+            return False
         df = self.read_file()
         df.apply(lambda x: sum(x.isnull()), axis=0)
         df.fillna(df.mean(), inplace=True)
         df[df.columns.difference(['country', 'year'])] = preprocessing.StandardScaler().fit_transform(df[df.columns.difference(['country', 'year'])])
         new_df = df[df.columns.difference(['year'])].groupby(['country'], as_index=False).mean()
         # print(new_df)
-        messagebox.showinfo("Preprocessing", "Preprocessing completed successfully!")
-        self.kmeans(new_df)
+        messagebox.showinfo("K Means Clustering", "Preprocessing completed successfully!")
+        # self.kmeans(new_df)
+        self.final_df = new_df
 
-    def kmeans(self, df):
+    def kmeans(self):
         # if self.clusters_entry == "" or self.clusters_entry is None:
         #     self.clusters_entry = 1
         # if self.runs_entry == "" or self.runs_entry is None:
         #     self.runs_entry = 0
         # print("in kmeans")
-        k_means = KMeans(n_clusters=self.clusters_entry, init='random', n_init=self.runs_entry).fit(df[df.columns.difference(['country'])])
-        print(k_means)
+        if self.final_df is None:
+            messagebox.showwarning("K Means Clustering", "Preprocessing is required before clustering!")
+            return False
+        df = self.final_df
+        k_means = KMeans(n_clusters=self.clusters, init='random', n_init=self.runs).fit(df[df.columns.difference(['country'])])
+        df['labels'] = k_means.labels_
+        print(k_means.labels_)
+        self.plot_clusters(df)
         # pass
 
-    def read_file(self):
-        try:
-            df = pd.read_excel(self.path)
-            return df
-        except OSError:
-            return False
+    def plot_clusters(self, df):
+        plt.scatter(df['Social support'], df['Generosity'], c=df['labels'])
+        plt.title('K Means Clustering')
+        plt.xlabel('Social support')
+        plt.ylabel('Generosity')
+        plt.colorbar()
+        plt.savefig("plot1.png")
+        photo = PhotoImage(file="plot1.png")
+        photo = photo.subsample(1, 1)
+        img = Label(root, image=photo)
+        img.image = photo
+        img.place(x=0, y=100)
 
 
 root = Tk()
 my_gui = Clustering(root)
-root.geometry("600x400")
+root.geometry("800x600")
 root.mainloop()
