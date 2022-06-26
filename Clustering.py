@@ -18,9 +18,6 @@ class Clustering:
         self.clusters = None
         self.runs = None
         self.final_df = None
-        self.photo = None
-        self.world_photo = None
-        self.plot = None
 
         self.path_label = Label(master, text="Select File:")
         self.clusters_label = Label(master, text="Number of clusters k:")
@@ -145,20 +142,20 @@ class Clustering:
         plt.title('K Means Clustering')
         plt.xlabel('Social support')
         plt.ylabel('Generosity')
-        self.plot = plt.colorbar()
+        plt.colorbar()
         plt.savefig("plot.png")
-        self.photo = PhotoImage(file="plot.png")
-        self.photo = self.photo.subsample(1, 1)
-        img = Label(root, image=self.photo)
-        img.image = self.photo
+        photo = PhotoImage(file="plot.png")
+        photo = photo.subsample(1, 1)
+        img = Label(root, image=photo)
+        img.image = photo
         img.place(x=10, y=100)
         py.sign_in("yoni93", "X5hK2SJ7Nv94S0kmafup")
         fig = px.choropleth(df, locations='country', color='labels', color_continuous_scale="Viridis", scope="world", locationmode='country names', width=600, height=400,)
         py.image.save_as(fig, filename='name.png')
-        self.world_photo = PhotoImage(file="name.png")
-        self.world_photo = self.world_photo.subsample(1, 1)
-        world_img = Label(root, image=self.world_photo)
-        world_img.image = self.world_photo
+        world_photo = PhotoImage(file="name.png")
+        world_photo = world_photo.subsample(1, 1)
+        world_img = Label(root, image=world_photo)
+        world_img.image = world_photo
         world_img.place(x=660, y=100)
 
 
