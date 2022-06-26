@@ -18,6 +18,9 @@ class Clustering:
         self.clusters = None
         self.runs = None
         self.final_df = None
+        self.photo = None
+        self.world_photo = None
+        self.plot = None
 
         self.path_label = Label(master, text="Select File:")
         self.clusters_label = Label(master, text="Number of clusters k:")
@@ -71,7 +74,7 @@ class Clustering:
 
     def validate_clusters(self, new_text):
         if not new_text:  # the field is being cleared
-            self.clusters = 1
+            self.clusters = None
             return True
         try:
             self.clusters = int(new_text)
@@ -83,7 +86,7 @@ class Clustering:
 
     def validate_runs(self, new_text):
         if not new_text:  # the field is being cleared
-            self.runs = 1
+            self.runs = None
             return True
         try:
             self.runs = int(new_text)
@@ -136,24 +139,26 @@ class Clustering:
         self.plot_clusters(df)
 
     def plot_clusters(self, df):
+        plt.figure(1)
+        plt.clf()
         plt.scatter(df['Social support'], df['Generosity'], c=df['labels'])
         plt.title('K Means Clustering')
         plt.xlabel('Social support')
         plt.ylabel('Generosity')
-        plt.colorbar()
+        self.plot = plt.colorbar()
         plt.savefig("plot.png")
-        photo = PhotoImage(file="plot.png")
-        photo = photo.subsample(1, 1)
-        img = Label(root, image=photo)
-        img.image = photo
+        self.photo = PhotoImage(file="plot.png")
+        self.photo = self.photo.subsample(1, 1)
+        img = Label(root, image=self.photo)
+        img.image = self.photo
         img.place(x=10, y=100)
         py.sign_in("yoni93", "X5hK2SJ7Nv94S0kmafup")
         fig = px.choropleth(df, locations='country', color='labels', color_continuous_scale="Viridis", scope="world", locationmode='country names', width=600, height=400,)
         py.image.save_as(fig, filename='name.png')
-        world_photo = PhotoImage(file="name.png")
-        world_photo = world_photo.subsample(1, 1)
-        world_img = Label(root, image=world_photo)
-        world_img.image = world_photo
+        self.world_photo = PhotoImage(file="name.png")
+        self.world_photo = self.world_photo.subsample(1, 1)
+        world_img = Label(root, image=self.world_photo)
+        world_img.image = self.world_photo
         world_img.place(x=660, y=100)
 
 
