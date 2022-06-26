@@ -159,7 +159,12 @@ class Clustering:
         world_img.place(x=660, y=100)
 
 
+def _quit():
+    root.quit()
+    root.destroy()
+
 root = Tk()
+root.protocol("WM_DELETE_WINDOW", _quit)
 my_gui = Clustering(root)
 root.geometry("1280x720")
 root.mainloop()
